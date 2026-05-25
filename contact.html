@@ -9,6 +9,13 @@
         nav { background-color: #f4f4f4; padding: 10px; border-radius: 5px; }
         nav a { margin: 0 10px; color: #007bff; text-decoration: none; }
         
+        /* 按鈕控制區 */
+        .btn-group { margin-top: 15px; display: flex; gap: 10px; }
+        .export-btn { background-color: #007bff; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; flex: 1; }
+        .export-btn:hover { background-color: #0056b3; }
+        .clear-btn { background-color: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .clear-btn:hover { background-color: #bd2130; }
+
         /* 搜尋框樣式 */
         .search-box { margin: 20px 0; background-color: #e2e3e5; padding: 15px; border-radius: 5px; }
         .search-box input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #17a2b8; border-radius: 4px; }
@@ -17,8 +24,6 @@
         .data-item { background-color: #fff3cd; border: 1px solid #ffeeba; padding: 12px; border-radius: 5px; margin-top: 10px; color: #333; }
         .data-item span { font-weight: bold; color: #007bff; }
         .time-tag { font-size: 12px; color: #666; text-align: right; margin-top: 5px; }
-        
-        .clear-btn { background-color: #dc3545; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; float: right; margin-top: -5px; }
     </style>
 </head>
 <body>
@@ -32,42 +37,40 @@
     <hr>
 
     <h1>📂 歷史資料存放區</h1>
-    <p>這裡會堆疊所有從主頁輸入的資料。您可以點選右方按鈕清除所有紀錄：
-        <button class="clear-btn" onclick="clearAllData()">清除全部</button>
-    </p>
+    <p>這裡會堆疊所有從主頁輸入的資料。您可以進行管理與匯出：</p>
+
+    <div class="btn-group">
+        <button class="export-btn" onclick="exportToExcel()">📊 匯出成 Excel (CSV)</button>
+        <button class="clear-btn" onclick="clearAllData()">⚠️ 清除全部紀錄</button>
+    </div>
 
     <div class="search-box">
         <label style="font-weight: bold; display: block; margin-bottom: 5px;">🔍 搜尋資料（可搜人名、客戶、機種）：</label>
         <input type="text" id="searchBar" onkeyup="filterData()" placeholder="輸入關鍵字自動篩選...">
     </div>
 
-    <div id="data-container">
-        </div>
+    <div id="data-container"></div>
 
     <script>
-        // 全局變數用來存放目前撈出來的陣列
         let allRecords = [];
 
         window.onload = function() {
-            // 從 LocalStorage 抓取全部堆疊的資料
             const storedData = localStorage.getItem('customer_data_list');
             if (storedData) {
                 allRecords = JSON.parse(storedData);
             }
-            displayData(allRecords); // 顯示在網頁上
+            displayData(allRecords);
         };
 
-        // 負責把陣列資料畫在網頁上的 function
         function displayData(records) {
             const container = document.getElementById('data-container');
-            container.innerHTML = ''; // 先清空舊畫面
+            container.innerHTML = '';
 
             if (records.length === 0) {
                 container.innerHTML = '<p style="color: #666; text-align: center;">無任何資料紀錄</p>';
                 return;
             }
 
-            // 將最新輸入的排在最上面 (倒序排列)
             for (let i = records.length - 1; i >= 0; i--) {
                 const item = records[i];
                 const htmlBlock = `
@@ -82,21 +85,48 @@
             }
         }
 
-        // 🔍 關鍵字即時篩選搜尋功能
         function filterData() {
             const keyword = document.getElementById('searchBar').value.toLowerCase();
-            
-            // 篩選只要符合人名、客戶或機種其中一個字眼的資料
             const filtered = allRecords.filter(item => {
                 return item.name.toLowerCase().includes(keyword) || 
                        item.client.toLowerCase().includes(keyword) || 
                        item.device.toLowerCase().includes(keyword);
             });
-
-            displayData(filtered); // 重新渲染畫面
+            displayData(filtered);
         }
 
-        // 清除全部歷史資料
+        // 📊 關鍵功能：將累積的資料轉成 CSV / Excel 可讀取檔案
+        function exportToExcel() {
+            if (allRecords.length === 0) {
+                alert("目前沒有任何資料可以匯出！");
+                return;
+            }
+
+            // 1. 定義 Excel 的表頭（欄位名稱）
+            let csvContent = "\uFEFF"; // 加上 UTF-8 BOM 擋牆，確保 Excel 打開中文不會變亂碼
+            csvContent += "人名,客戶,機種,儲存時間\n";
+
+            // 2. 逐行把堆疊的資料放進去
+            allRecords.forEach(item => {
+                // 用逗號隔開欄位，並把換行符號拿掉避免格式出錯
+                const row = `"${item.name}","${item.client}","${item.device}","${item.time}"`;
+                csvContent += row + "\n";
+            });
+
+            // 3. 建立瀏覽器下載檔案的動作
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            
+            link.setAttribute("href", url);
+            link.setAttribute("download", `客戶機種資料表_${new Date().toISOString().slice(0,10)}.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click(); // 模擬點擊，觸發下載
+            document.body.removeChild(link);
+        }
+
         function clearAllData() {
             if(confirm("確定要刪除所有堆疊的歷史紀錄嗎？")) {
                 localStorage.removeItem('customer_data_list');
