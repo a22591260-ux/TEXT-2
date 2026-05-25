@@ -4,19 +4,73 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的網站主頁</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+        nav { background-color: #f4f4f4; padding: 10px; border-radius: 5px; }
+        nav a { margin: 0 10px; color: #007bff; text-decoration: none; }
+        .form-group { margin-top: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        .btn { background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; margin-top: 15px; width: 100%; }
+        .btn:hover { background-color: #218838; }
+        #message { margin-top: 10px; color: blue; font-weight: bold; }
+    </style>
 </head>
 <body>
 
     <nav>
         <strong>主頁</strong> | 
-        <a href="contact.html">聯絡我們</a>
-<a href="qa.html">問題 Q&A</a>
+        <a href="contact.html">聯絡我們</a> | 
+        <a href="qa.html">問題 Q&A</a>
     </nav>
 
     <hr>
 
-    <h1>歡迎來到我的網站主頁！</h1>
-    <p>這是一個測試的多頁面靜態網站。</p>
+    <h1>客戶機種資料輸入</h1>
+    <p>請在下方輸入資料，輸入後可至「聯絡我們」頁面查看結果：</p>
+
+    <div class="form-group">
+        <label for="userName">人名：</label>
+        <input type="text" id="userName" placeholder="請輸入姓名">
+    </div>
+
+    <div class="form-group">
+        <label for="clientName">客戶：</label>
+        <input type="text" id="clientName" placeholder="請輸入客戶名稱">
+    </div>
+
+    <div class="form-group">
+        <label for="deviceModel">機種：</label>
+        <input type="text" id="deviceModel" placeholder="請輸入機種型號">
+    </div>
+
+    <button class="btn" onclick="saveData()">暫存並儲存資料</button>
+    <p id="message"></p>
+
+    <script>
+        function saveData() {
+            // 抓取輸入框裡面的值
+            const name = document.getElementById('userName').value;
+            const client = document.getElementById('clientName').value;
+            const device = document.getElementById('deviceModel').value;
+
+            // 檢查是否都有填寫
+            if(!name || !client || !device) {
+                document.getElementById('message').style.color = 'red';
+                document.getElementById('message').innerText = '請填寫所有欄位！';
+                return;
+            }
+
+            // 將資料存入瀏覽器的 LocalStorage 中
+            localStorage.setItem('saved_name', name);
+            localStorage.setItem('saved_client', client);
+            localStorage.setItem('saved_device', device);
+
+            // 提示儲存成功
+            document.getElementById('message').style.color = 'green';
+            document.getElementById('message').innerText = '資料已暫存！現在可以點擊導覽列的「聯絡我們」查看。';
+        }
+    </script>
 
 </body>
 </html>
