@@ -59,15 +59,13 @@
                 return;
             }
 
-            // 1. 先抓取目前已經存了哪些資料（如果沒有，就建立空陣列）
             let currentList = localStorage.getItem('customer_data_list');
             if (currentList) {
-                currentList = JSON.parse(currentList); // 轉回陣列
+                currentList = JSON.parse(currentList);
             } else {
                 currentList = [];
             }
 
-            // 2. 建立新的一筆資料，並加上時間戳記
             const newRecord = {
                 name: name,
                 client: client,
@@ -75,13 +73,9 @@
                 time: new Date().toLocaleString()
             };
 
-            // 3. 把新資料推進（堆疊）陣列中
             currentList.push(newRecord);
-
-            // 4. 將完整的新陣列存回儲存區
             localStorage.setItem('customer_data_list', JSON.stringify(currentList));
 
-            // 清空輸入框方便下一筆輸入
             document.getElementById('userName').value = '';
             document.getElementById('clientName').value = '';
             document.getElementById('deviceModel').value = '';
