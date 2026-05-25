@@ -4,24 +4,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>聯絡我們</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+        nav { background-color: #f4f4f4; padding: 10px; border-radius: 5px; }
+        nav a { margin: 0 10px; color: #007bff; text-decoration: none; }
+        .data-display { background-color: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 5px; margin-top: 20px; color: #856404; }
+        .data-item { margin: 8px 0; font-size: 16px; }
+        .data-item span { font-weight: bold; color: #333; }
+    </style>
 </head>
 <body>
 
- <nav>
+    <nav>
         <a href="index.html">主頁</a> | 
         <strong>聯絡我們</strong> | 
         <a href="qa.html">問題 Q&A</a>
     </nav>
 
-
     <hr>
 
-    <h1>聯絡我們</h1>
-    <p>如果您有任何問題，歡迎透過以下方式聯絡我：</p>
-    <ul>
-        <li>電子郵件：example@email.com</li>
-        <li>GitHub 帳號：您的帳號</li>
-    </ul>
+    <h1>聯絡我們 與 資料顯示</h1>
+    <p>如果您有任何問題，歡迎聯絡我。以下是您在主頁輸入並傳送過來的資料：</p>
+
+    <div class="data-display">
+        <h3>📥 從主頁接收到的資料：</h3>
+        <div class="data-item">人名： <span id="show-name">尚未輸入資料</span></div>
+        <div class="data-item">客戶： <span id="show-client">尚未輸入資料</span></div>
+        <div class="data-item">機種： <span id="show-device">尚未輸入資料</span></div>
+    </div>
+
+    <script>
+        // 當網頁一打開的時候，自動執行這段程式碼
+        window.onload = function() {
+            // 從瀏覽器的 LocalStorage 裡面把資料抓出來
+            const gotName = localStorage.getItem('saved_name');
+            const gotClient = localStorage.getItem('saved_client');
+            const gotDevice = localStorage.getItem('saved_device');
+
+            // 如果有抓到資料，就動態更新到網頁畫面上
+            if (gotName) document.getElementById('show-name').innerText = gotName;
+            if (gotClient) document.getElementById('show-client').innerText = gotClient;
+            if (gotDevice) document.getElementById('show-device').innerText = gotDevice;
+        };
+    </script>
 
 </body>
 </html>
