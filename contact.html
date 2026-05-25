@@ -8,22 +8,13 @@
         body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
         nav { background-color: #f4f4f4; padding: 10px; border-radius: 5px; }
         nav a { margin: 0 10px; color: #007bff; text-decoration: none; }
-        
-        /* 按鈕控制區 */
-        .btn-group { margin-top: 15px; display: flex; gap: 10px; }
-        .export-btn { background-color: #007bff; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; flex: 1; }
-        .export-btn:hover { background-color: #0056b3; }
-        .clear-btn { background-color: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .clear-btn:hover { background-color: #bd2130; }
-
-        /* 搜尋框樣式 */
+        .export-btn { background-color: #007bff; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; }
         .search-box { margin: 20px 0; background-color: #e2e3e5; padding: 15px; border-radius: 5px; }
         .search-box input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #17a2b8; border-radius: 4px; }
-        
-        /* 清單堆疊樣式 */
-        .data-item { background-color: #fff3cd; border: 1px solid #ffeeba; padding: 12px; border-radius: 5px; margin-top: 10px; color: #333; }
-        .data-item span { font-weight: bold; color: #007bff; }
+        .data-item { background-color: #e8f4fd; border: 1px solid #bee5eb; padding: 12px; border-radius: 5px; margin-top: 10px; color: #333; }
+        .data-item span { font-weight: bold; color: #0056b3; }
         .time-tag { font-size: 12px; color: #666; text-align: right; margin-top: 5px; }
+        #loading { text-align: center; font-weight: bold; color: #666; margin: 20px 0; }
     </style>
 </head>
 <body>
@@ -36,30 +27,36 @@
 
     <hr>
 
-    <h1>📂 歷史資料存放區</h1>
-    <p>這裡會堆疊所有從主頁輸入的資料。您可以進行管理與匯出：</p>
+    <h1>📂 雲端歷史資料存放區</h1>
+    <p>此頁面資料即時與 Google 試算表連線同步：</p>
 
-    <div class="btn-group">
-        <button class="export-btn" onclick="exportToExcel()">📊 匯出成 Excel (CSV)</button>
-        <button class="clear-btn" onclick="clearAllData()">⚠️ 清除全部紀錄</button>
-    </div>
+    <button class="export-btn" onclick="exportToExcel()">📊 匯出目前畫面資料為 Excel (CSV)</button>
 
     <div class="search-box">
-        <label style="font-weight: bold; display: block; margin-bottom: 5px;">🔍 搜尋資料（可搜人名、客戶、機種）：</label>
+        <label style="font-weight: bold; display: block; margin-bottom: 5px;">🔍 篩選與搜尋雲端資料：</label>
         <input type="text" id="searchBar" onkeyup="filterData()" placeholder="輸入關鍵字自動篩選...">
     </div>
 
+    <div id="loading">正在從 Google 雲端抓取最新資料...</div>
     <div id="data-container"></div>
 
     <script>
+        // 🌟 已自動為您填入第二張截圖的 Google 部署網址
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwTBFvYyAn_IJS5tp8gW2h2_zRaKTQfJF7aRbx8WWDGNyZALnlomISS5mOJAMF_hMNY/exec";
         let allRecords = [];
 
         window.onload = function() {
-            const storedData = localStorage.getItem('customer_data_list');
-            if (storedData) {
-                allRecords = JSON.parse(storedData);
-            }
-            displayData(allRecords);
+            fetch(GOOGLE_SCRIPT_URL)
+            .then(response => response.json())
+            .then(data => {
+                allRecords = data;
+                document.getElementById('loading').style.display = 'none';
+                displayData(allRecords);
+            })
+            .catch(error => {
+                document.getElementById('loading').innerText = '❌ 無法讀取雲端資料，請確認試算表已開啟「知道連結的任何人皆可檢視」權限。';
+                console.error(error);
+            });
         };
 
         function displayData(records) {
@@ -67,7 +64,7 @@
             container.innerHTML = '';
 
             if (records.length === 0) {
-                container.innerHTML = '<p style="color: #666; text-align: center;">無任何資料紀錄</p>';
+                container.innerHTML = '<p style="text-align: center; color: #666;">雲端目前無任何紀錄</p>';
                 return;
             }
 
@@ -78,7 +75,7 @@
                         <div>👤 <span>人名：</span> ${item.name}</div>
                         <div>🏢 <span>客戶：</span> ${item.client}</div>
                         <div>⚙️ <span>機種：</span> ${item.device}</div>
-                        <div class="time-tag">🕒 儲存時間：${item.time}</div>
+                        <div class="time-tag">🕒 生產時間：${item.time}</div>
                     </div>
                 `;
                 container.innerHTML += htmlBlock;
@@ -95,46 +92,22 @@
             displayData(filtered);
         }
 
-        // 📊 關鍵功能：將累積的資料轉成 CSV / Excel 可讀取檔案
         function exportToExcel() {
-            if (allRecords.length === 0) {
-                alert("目前沒有任何資料可以匯出！");
-                return;
-            }
-
-            // 1. 定義 Excel 的表頭（欄位名稱）
-            let csvContent = "\uFEFF"; // 加上 UTF-8 BOM 擋牆，確保 Excel 打開中文不會變亂碼
-            csvContent += "人名,客戶,機種,儲存時間\n";
-
-            // 2. 逐行把堆疊的資料放進去
+            if (allRecords.length === 0) { alert("無資料可匯出！"); return; }
+            let csvContent = "\uFEFF"; 
+            csvContent += "人名,客戶,機種,時間\n";
             allRecords.forEach(item => {
-                // 用逗號隔開欄位，並把換行符號拿掉避免格式出錯
-                const row = `"${item.name}","${item.client}","${item.device}","${item.time}"`;
-                csvContent += row + "\n";
+                csvContent += `"${item.name}","${item.client}","${item.device}","${item.time}"\n`;
             });
-
-            // 3. 建立瀏覽器下載檔案的動作
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
-            
             link.setAttribute("href", url);
-            link.setAttribute("download", `客戶機種資料表_${new Date().toISOString().slice(0,10)}.csv`);
-            link.style.visibility = 'hidden';
-            
+            link.setAttribute("download", `雲端ERP報表_${new Date().toISOString().slice(0,10)}.csv`);
             document.body.appendChild(link);
-            link.click(); // 模擬點擊，觸發下載
+            link.click();
             document.body.removeChild(link);
         }
-
-        function clearAllData() {
-            if(confirm("確定要刪除所有堆疊的歷史紀錄嗎？")) {
-                localStorage.removeItem('customer_data_list');
-                allRecords = [];
-                displayData(allRecords);
-            }
-        }
     </script>
-
 </body>
 </html>
