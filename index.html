@@ -26,8 +26,8 @@
 
     <hr>
 
-    <h1>客戶機種資料輸入</h1>
-    <p>請在下方輸入資料，系統會自動將資料「堆疊累積」至資料存放區：</p>
+    <h1>雲端 ERP 資料輸入</h1>
+    <p>輸入的資料將會即時同步至雲端 Google 試算表：</p>
 
     <div class="form-group">
         <label for="userName">人名：</label>
@@ -44,46 +44,60 @@
         <input type="text" id="deviceModel" placeholder="請輸入機種型號">
     </div>
 
-    <button class="btn" onclick="saveData()">新增並堆疊資料</button>
+    <button class="btn" id="submitBtn" onclick="saveData()">傳送至雲端試算表</button>
     <p id="message"></p>
 
     <script>
+        // 🌟 已自動為您填入第二張截圖的 Google 部署網址
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwTBFvYyAn_IJS5tp8gW2h2_zRaKTQfJF7aRbx8WWDGNyZALnlomISS5mOJAMF_hMNY/exec";
+
         function saveData() {
             const name = document.getElementById('userName').value;
             const client = document.getElementById('clientName').value;
             const device = document.getElementById('deviceModel').value;
+            const msgEl = document.getElementById('message');
+            const btnEl = document.getElementById('submitBtn');
 
             if(!name || !client || !device) {
-                document.getElementById('message').style.color = 'red';
-                document.getElementById('message').innerText = '請填寫所有欄位！';
+                msgEl.style.color = 'red';
+                msgEl.innerText = '請填寫所有欄位！';
                 return;
             }
 
-            let currentList = localStorage.getItem('customer_data_list');
-            if (currentList) {
-                currentList = JSON.parse(currentList);
-            } else {
-                currentList = [];
-            }
+            msgEl.style.color = 'orange';
+            msgEl.innerText = '資料傳送中，請稍候...';
+            btnEl.disabled = true;
 
-            const newRecord = {
+            const data = {
                 name: name,
                 client: client,
                 device: device,
-                time: new Date().toLocaleString()
+                time: new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })
             };
 
-            currentList.push(newRecord);
-            localStorage.setItem('customer_data_list', JSON.stringify(currentList));
-
-            document.getElementById('userName').value = '';
-            document.getElementById('clientName').value = '';
-            document.getElementById('deviceModel').value = '';
-
-            document.getElementById('message').style.color = 'green';
-            document.getElementById('message').innerText = '資料已成功堆疊！可至「資料存放區」查看與搜尋。';
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            })
+            .then(() => {
+                msgEl.style.color = 'green';
+                msgEl.innerText = '🎉 資料已成功寫入 Google 雲端試算表！';
+                
+                document.getElementById('userName').value = '';
+                document.getElementById('clientName').value = '';
+                document.getElementById('deviceModel').value = '';
+            })
+            .catch(error => {
+                msgEl.style.color = 'red';
+                msgEl.innerText = '錯誤：無法連線至雲端。';
+                console.error(error);
+            })
+            .finally(() => {
+                btnEl.disabled = false;
+            });
         }
     </script>
-
 </body>
 </html>
